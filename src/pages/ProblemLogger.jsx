@@ -5,7 +5,7 @@ import { useAuth } from "../context/AuthContext";
 import { useNavigate, useParams } from "react-router-dom";
 
 export default function ProblemLogger() {
-  const { id } = useParams(); // Get ID from URL if editing
+  const { id } = useParams();
   const isEditMode = Boolean(id);
   const titleRef = useRef(null);
 
@@ -29,14 +29,14 @@ export default function ProblemLogger() {
   const { currentUser } = useAuth();
   const navigate = useNavigate();
 
-  // Auto-focus Title input on mount (Satisfies "Advanced React" requirement)
+  //auto focus
   useEffect(() => {
     if (titleRef.current) {
       titleRef.current.focus();
     }
   }, []);
 
-  // Load problem data if in edit mode
+  //load problem data
   useEffect(() => {
     if (!isEditMode) return;
 
@@ -73,9 +73,8 @@ export default function ProblemLogger() {
     fetchProblem();
   }, [id, isEditMode]);
 
-  // Auto-detect platform from URL
   useEffect(() => {
-    if (!url || isEditMode) return; // Don't auto-detect if editing unless URL changes? 
+    if (!url || isEditMode) return;
     const lowerUrl = url.toLowerCase();
 
     if (lowerUrl.includes("leetcode.com")) setPlatform("LeetCode");
@@ -150,7 +149,7 @@ export default function ProblemLogger() {
       const prompt = `Analyze this code and determine its Time and Space Complexity in Big-O notation. Also provide a 1-sentence explanation of why.\nFormat your response exactly like this:\nTime: O(...)\nSpace: O(...)\nExplanation: ...\n\nCode:\n${codeSnippet}`;
 
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second strict timeout
+      const timeoutId = setTimeout(() => controller.abort(), 10000); //10sec timeout
 
       const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent?key=${apiKey}`, {
         method: "POST", headers: { "Content-Type": "application/json" },
@@ -170,7 +169,6 @@ export default function ProblemLogger() {
 
     } catch (err) {
       console.warn("Real API failed, falling back to Graceful Mock for Viva Presentation:", err);
-      // Graceful fallback for Live Presentations
       const mockResult = `Time: O(N)\nSpace: O(1)\nExplanation: This is a simulated fallback response because the AI Free-Tier quota was exceeded during your presentation.`;
       setNotes((prev) => prev ? prev + "\n\n--- AI Analysis (Graceful Fallback) ---\n" + mockResult : "--- AI Analysis (Graceful Fallback) ---\n" + mockResult);
     } finally {
@@ -296,7 +294,6 @@ export default function ProblemLogger() {
           />
         </div>
 
-        {/* Checkbox Interactive Zone */}
         <div className="flex flex-col sm:flex-row bg-black/20 p-5 rounded-2xl border border-white/5 gap-6 sm:gap-10 mt-2">
           <label className="flex items-center gap-4 cursor-pointer group">
             <div className={`w-6 h-6 rounded flex items-center justify-center transition-all ${isSolved ? 'bg-[#4C9C62] shadow-[0_0_10px_rgba(76,156,98,0.3)]' : 'bg-black border border-white/10 group-hover:border-white/20'}`}>

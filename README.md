@@ -1,4 +1,4 @@
-# 🚀 AlgoTracker - SaaS-grade DSA Progress Dashboard 
+# AlgoTracker - SaaS-grade DSA Progress Dashboard 
 
 ![AlgoTracker Banner](https://img.shields.io/badge/Project-AlgoTracker-indigo?style=for-the-badge&logo=react)
 ![React](https://img.shields.io/badge/React-19.0-blue?style=for-the-badge&logo=react)
@@ -9,7 +9,7 @@
 
 ---
 
-## 🧠 1. Problem Statement
+## 1. Problem Statement
 
 ### Who is the User?
 Computer Science students, competitive developers, and software engineers preparing for technical interviews (e.g., Leetcode, Codeforces, FAANG prep).
@@ -22,41 +22,42 @@ Without structured revision and behavioral insights (like streak tracking and AI
 
 ---
 
-## ✨ 2. Core Features (Application Functionality)
+## 2. Core Features (Application Functionality)
 
-✅ **Authentication System**: Secure user signup, login, and protected routes using Firebase Auth.
-✅ **Interactive Dashboard (CRUD)**: Create, Read, Update, and Delete problem logs entirely backed by Firestore.
-✅ **🔥 Behavioral Gamification (Streaks)**: Dynamically calculates consecutive days of practice to gamify interview prep.
-✅ **🤖 AI Space/Time Complexity Analyzer**: Uses the **Google Gemini API** (`gemini-flash-latest`) to statically analyze pasted algorithms and return precise Big-O complexities directly into the user's notes.
-✅ **📊 Tagging & Analytics**: Extract categories (e.g., *Dynamic Programming, Trees*) and visually represent "Top Practiced Topics" and "Difficulty Distribution".
-✅ **🔄 Revision Room**: Dedicated filtering for problems explicitly pinned for "Future Revision".
-
----
-
-## ⚛️ 3. React Fundamentals & Architecture
-
-This project strictly adheres to modern React practices to achieve clean code and optimal performance:
-
-- **Core**: Functional Components, precise State Management (`useState`), side-effect handling (`useEffect`), and robust conditional rendering.
-- **Context API**: Global management of the user's Auth state (`src/context/AuthContext.jsx`) preventing prop drilling.
-- **Advanced Hooks (`useMemo` & `useCallback`)**: The array sorting algorithms for Dashboard Streaks and Category extracting rely on `useMemo` to prevent expensive re-calculations. Delete handlers utilize `useCallback` to prevent child-component re-renders.
-- **Direct DOM Manipulation (`useRef`)**: Implemented UX micro-interactions like auto-focusing inputs on mount.
-- **Advanced Rendering (Lazy Loading & Suspense)**: Implemented route-based Code-Splitting in `App.jsx` using `React.lazy()` to significantly reduce the initial JavaScript payload.
+* **Authentication System**: Secure user signup, login, and protected routes using Firebase Auth.
+* **Interactive Dashboard (CRUD)**: Create, Read, Update, and Delete problem logs entirely backed by Firestore.
+* **Behavioral Gamification (Streaks)**: Dynamically calculates consecutive days of practice to gamify interview prep.
+* **AI Space/Time Complexity Analyzer**: Uses the **Google Gemini API** (`gemini-flash-latest`) to statically analyze pasted algorithms and return precise Big-O complexities directly into the user's notes.
+* **Tagging & Analytics**: Extract categories (e.g., *Dynamic Programming, Trees*) and visually represent "Top Practiced Topics" and "Difficulty Distribution".
+* **Revision Room**: Dedicated filtering for problems explicitly pinned for "Future Revision".
 
 ---
 
-## 🛠️ 4. Tech Stack
+## 3. Usage of Modern React Concepts
+
+This project strictly adheres to modern React practices to achieve clean architecture, prevent unnecessary re-renders, and ensure optimal browser performance:
+
+* **Functional Components & Hooks**: The entire application is built using modern functional components, relying heavily on `useState` for explicit state management and `useEffect` for network requests, side-effects, and DOM manipulation.
+* **Context API**: Global management of the user's Authentication state is handled via `src/context/AuthContext.jsx`. This architecture prevents prop-drilling and ensures the active session is securely tracked across all hierarchical routes.
+* **useMemo (Computational Optimization)**: Real-time analytics (such as the Array sorting algorithms for Dashboard Streaks and Category filtering) are wrapped in `useMemo`. This guarantees that heavy computational logic only fires when the specific dependency arrays change, saving immense CPU overhead.
+* **useCallback (Reference Integrity)**: Delete and Edit handler functions are memoized down the component tree using `useCallback` to maintain referential identity, preventing deep child-components from needlessly re-rendering.
+* **useRef (Direct DOM Traversal)**: Implemented UX micro-interactions like auto-focusing title inputs on component mount using `useRef` to target elements without triggering state updates.
+* **Lazy Loading & Suspense**: Implemented route-based Code-Splitting in the master `App.jsx` router tree using `React.lazy()`. The React tree intelligently pauses rendering via `<Suspense>` fallbacks, massively reducing the initial JavaScript payload to drastically improve Time-to-Interactive (TTI) scores.
+
+---
+
+## 4. Tech Stack
 
 - **Frontend Environment**: Vite + React 19
 - **Styling & UI**: Tailwind CSS (with Glassmorphic dynamic animations)
 - **Routing**: React Router DOM v7
 - **Backend / Database**: Firebase (Authentication + Cloud Firestore)
-- **Artificial Intelligence**: Google Gemini 1.5/2.0 REST API
+- **Artificial Intelligence**: Google Gemini REST API
 - **Icons**: Lucide React & React Icons 
 
 ---
 
-## 🏃 5. Setup & Local Installation
+## 5. Setup & Local Installation
 
 Follow these steps to run the project locally:
 
@@ -92,5 +93,5 @@ Follow these steps to run the project locally:
 
 ---
 
-## ⚖️ Academic Integrity & Rubric Compliance
-This application was developed as the **End-Term Project Submission** for the *Building Web Applications with React (Batch 2029)* course. Every feature was intentionally designed to check off the 10-point evaluation rubric, showcasing both fundamental UI design and advanced programmatic architectural decisions. 
+## 6. Academic Integrity & Rubric Compliance
+This application was developed as the End-Term Project Submission for the Building Web Applications with React course. Every feature was intentionally designed, showcasing both fundamental UI design and advanced programmatic architectural decisions. 

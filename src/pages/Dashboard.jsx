@@ -71,39 +71,38 @@ export default function Dashboard() {
     return { total, solvedCount, successRate, easyCount, mediumCount, hardCount };
   }, [problems]);
 
-  // Streak Calculation
+  //streak Calculation
   const streak = useMemo(() => {
     if (!problems.length) return 0;
-    
+
     const dates = [...new Set(problems.map(p => {
       const date = p.createdAt?.seconds ? new Date(p.createdAt.seconds * 1000) : new Date();
-      return date.toLocaleDateString("en-CA"); // 'YYYY-MM-DD' locally
+      return date.toLocaleDateString("en-CA");
     }))].sort((a, b) => new Date(b) - new Date(a));
 
     let currentStreak = 0;
     let checkDate = new Date();
-    
-    // Normalize to date string
+
+    //to date string
     const todayStr = checkDate.toLocaleDateString("en-CA");
     let targetDate = new Date();
 
     if (!dates.includes(todayStr)) {
-      targetDate.setDate(targetDate.getDate() - 1); // Start checking from yesterday
+      targetDate.setDate(targetDate.getDate() - 1); //start checking from yesterday
     }
 
-    for (let i = 0; i < 365; i++) { // safety limit
-        const targetStr = targetDate.toLocaleDateString("en-CA");
-        if (dates.includes(targetStr)) {
-            currentStreak++;
-            targetDate.setDate(targetDate.getDate() - 1);
-        } else {
-            break;
-        }
+    for (let i = 0; i < 365; i++) {
+      const targetStr = targetDate.toLocaleDateString("en-CA");
+      if (dates.includes(targetStr)) {
+        currentStreak++;
+        targetDate.setDate(targetDate.getDate() - 1);
+      } else {
+        break;
+      }
     }
     return currentStreak;
   }, [problems]);
 
-  // Top Tags
   const topTags = useMemo(() => {
     const counts = {};
     problems.forEach(p => {
@@ -153,7 +152,7 @@ export default function Dashboard() {
           <h1 className="text-4xl font-black text-white tracking-tight mb-2">Dashboard</h1>
           <p className="text-zinc-500 font-medium">Welcome back, analyze your performance and keep pushing.</p>
         </div>
-        
+
         <div className="bg-gradient-to-r from-orange-500/20 to-red-500/10 border border-orange-500/30 px-6 py-3 rounded-full flex items-center gap-4 shadow-[0_0_20px_rgba(249,115,22,0.15)] animate-slide-up">
           <span className="text-3xl filter drop-shadow-lg">🔥</span>
           <div>
