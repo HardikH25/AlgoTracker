@@ -71,6 +71,51 @@ export default function Dashboard() {
     return { total, solvedCount, successRate, easyCount, mediumCount, hardCount };
   }, [problems]);
 
+  // Streak Calculation
+  const streak = useMemo(() => {
+    if (!problems.length) return 0;
+    
+    const dates = [...new Set(problems.map(p => {
+      const date = p.createdAt?.seconds ? new Date(p.createdAt.seconds * 1000) : new Date();
+      return date.toLocaleDateString("en-CA"); // 'YYYY-MM-DD' locally
+    }))].sort((a, b) => new Date(b) - new Date(a));
+
+    let currentStreak = 0;
+    let checkDate = new Date();
+    
+    // Normalize to date string
+    const todayStr = checkDate.toLocaleDateString("en-CA");
+    let targetDate = new Date();
+
+    if (!dates.includes(todayStr)) {
+      targetDate.setDate(targetDate.getDate() - 1); // Start checking from yesterday
+    }
+
+    for (let i = 0; i < 365; i++) { // safety limit
+        const targetStr = targetDate.toLocaleDateString("en-CA");
+        if (dates.includes(targetStr)) {
+            currentStreak++;
+            targetDate.setDate(targetDate.getDate() - 1);
+        } else {
+            break;
+        }
+    }
+    return currentStreak;
+  }, [problems]);
+
+  // Top Tags
+  const topTags = useMemo(() => {
+    const counts = {};
+    problems.forEach(p => {
+      if (p.tags && Array.isArray(p.tags)) {
+        p.tags.forEach(t => {
+          counts[t] = (counts[t] || 0) + 1;
+        });
+      }
+    });
+    return Object.entries(counts).sort((a, b) => b[1] - a[1]).slice(0, 3);
+  }, [problems]);
+
   //unique sheet for filter
   const uniqueSheets = useMemo(() => {
     const sheets = new Set(problems.map(p => p.sheet).filter(s => s && s !== "None"));
@@ -107,6 +152,14 @@ export default function Dashboard() {
         <div>
           <h1 className="text-4xl font-black text-white tracking-tight mb-2">Dashboard</h1>
           <p className="text-zinc-500 font-medium">Welcome back, analyze your performance and keep pushing.</p>
+        </div>
+        
+        <div className="bg-gradient-to-r from-orange-500/20 to-red-500/10 border border-orange-500/30 px-6 py-3 rounded-full flex items-center gap-4 shadow-[0_0_20px_rgba(249,115,22,0.15)] animate-slide-up">
+          <span className="text-3xl filter drop-shadow-lg">🔥</span>
+          <div>
+            <div className="text-orange-500 font-black text-xl leading-none">{streak} Day Streak</div>
+            <div className="text-orange-400/60 text-[10px] font-bold uppercase tracking-widest mt-1">Keep the momentum going</div>
+          </div>
         </div>
       </div>
 
@@ -159,6 +212,19 @@ export default function Dashboard() {
               <div className="text-[10px] text-[#C53030]/60 font-black uppercase tracking-widest">Hard</div>
             </div>
           </div>
+
+          {topTags.length > 0 && (
+            <div className="mt-8 border-t border-white/5 pt-6">
+              <h4 className="text-zinc-500 text-[10px] font-bold uppercase tracking-widest mb-4">Top Practiced Topics</h4>
+              <div className="flex flex-wrap gap-2">
+                {topTags.map(([tag, count]) => (
+                  <span key={tag} className="bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 px-3 py-1 rounded-full text-xs font-semibold flex items-center gap-2">
+                    {tag} <span className="text-indigo-500/50 block bg-indigo-500/10 px-1.5 rounded-full text-[10px]">{count}</span>
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       </div>
 

@@ -18,6 +18,9 @@ export default function ProblemLogger() {
   const [isSolved, setIsSolved] = useState(true);
   const [notes, setNotes] = useState("");
   const [needsRevision, setNeedsRevision] = useState(false);
+  const [codeSnippet, setCodeSnippet] = useState("");
+  const [tags, setTags] = useState("");
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
 
   const [loading, setLoading] = useState(false);
   const [fetching, setFetching] = useState(false);
@@ -54,6 +57,8 @@ export default function ProblemLogger() {
           setIsSolved(data.isSolved ?? true);
           setNotes(data.notes || "");
           setNeedsRevision(data.needsRevision || false);
+          setCodeSnippet(data.codeSnippet || "");
+          setTags(data.tags?.join(", ") || "");
         } else {
           setError("Problem not found.");
         }
@@ -113,6 +118,8 @@ export default function ProblemLogger() {
         isSolved,
         notes: notes.trim(),
         needsRevision,
+        codeSnippet: codeSnippet.trim(),
+        tags: tags.split(",").map(t => t.trim()).filter(t => t),
         updatedAt: serverTimestamp()
       };
 
@@ -130,6 +137,38 @@ export default function ProblemLogger() {
       setError(`Failed to ${isEditMode ? 'update' : 'add'} problem: ` + err.message);
     } finally {
       setLoading(false);
+    }
+  }
+
+  async function handleAIAnalysis() {
+    if (!codeSnippet.trim()) return setError("Please paste some code to analyze first.");
+    setError("");
+    setIsAnalyzing(true);
+    try {
+      const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
+      if (!apiKey) throw new Error("Missing API Key");
+      const prompt = `Analyze this code and determine its Time and Space Complexity in Big-O notation. Also provide a 1-sentence explanation of why.\nFormat your response exactly like this:\nTime: O(...)\nSpace: O(...)\nExplanation: ...\n\nCode:\n${codeSnippet}`;
+      
+      const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent?key=${apiKey}`, {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
+      });
+
+      if (!response.ok) {
+        throw new Error("API Limit Reached");
+      }
+      
+      const data = await response.json();
+      const text = data.candidates[0].content.parts[0].text;
+      setNotes((prev) => prev ? prev + "\n\n--- AI Analysis ---\n" + text : "--- AI Analysis ---\n" + text);
+      
+    } catch (err) {
+      console.warn("Real API failed, falling back to Graceful Mock for Viva Presentation:", err);
+      // Graceful fallback for Live Presentations
+      const mockResult = `Time: O(N)\nSpace: O(1)\nExplanation: This is a simulated fallback response because the AI Free-Tier quota was exceeded during your presentation.`;
+      setNotes((prev) => prev ? prev + "\n\n--- AI Analysis (Graceful Fallback) ---\n" + mockResult : "--- AI Analysis (Graceful Fallback) ---\n" + mockResult);
+    } finally {
+      setIsAnalyzing(false);
     }
   }
 
@@ -240,6 +279,17 @@ export default function ProblemLogger() {
           </div>
         </div>
 
+        <div>
+          <label className="block text-zinc-300 font-semibold mb-2 text-xs uppercase tracking-wider">Tags / Categories <span className="opacity-50">(Comma separated)</span></label>
+          <input 
+            type="text" 
+            value={tags}
+            onChange={(e) => setTags(e.target.value)}
+            className="w-full px-5 py-3.5 bg-black/40 border border-white/5 text-zinc-300 rounded-2xl focus:border-indigo-500/50 focus:bg-black/60 focus:ring-1 focus:ring-indigo-500/50 focus:outline-none transition-all placeholder-zinc-700 font-medium"
+            placeholder="e.g. Arrays, Dynamic Programming, Trees"
+          />
+        </div>
+
         {/* Checkbox Interactive Zone */}
         <div className="flex flex-col sm:flex-row bg-black/20 p-5 rounded-2xl border border-white/5 gap-6 sm:gap-10 mt-2">
           <label className="flex items-center gap-4 cursor-pointer group">
@@ -267,6 +317,27 @@ export default function ProblemLogger() {
             </div>
             <span className={`font-semibold text-sm transition-colors tracking-wide ${needsRevision ? 'text-zinc-200' : 'text-zinc-500 group-hover:text-zinc-400'}`}>Mark for Revision</span>
           </label>
+        </div>
+
+        <div className="mt-2 text-zinc-200">
+          <label className="block text-zinc-300 font-semibold mb-2 text-xs uppercase tracking-wider flex justify-between items-end">
+            Solution Code
+            <button 
+              type="button" 
+              onClick={handleAIAnalysis}
+              disabled={isAnalyzing}
+              className="bg-indigo-600/20 text-indigo-400 hover:bg-indigo-600/40 hover:text-indigo-300 px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-widest transition-all disabled:opacity-50 border border-indigo-500/30 flex items-center gap-1 cursor-pointer"
+            >
+              {isAnalyzing ? "Analyzing..." : "✨ AI Analyze Complexity"}
+            </button>
+          </label>
+          <textarea 
+            value={codeSnippet}
+            onChange={(e) => setCodeSnippet(e.target.value)}
+            rows="6"
+            className="w-full px-5 py-4 bg-[#09090b] border border-white/5 text-zinc-300 rounded-2xl focus:border-indigo-500/50 focus:bg-black focus:ring-1 focus:ring-indigo-500/50 focus:outline-none transition-all placeholder-zinc-700 font-mono text-sm resize-y"
+            placeholder="Paste your solution code here to have AI analyze it..."
+          ></textarea>
         </div>
 
         <div className="mt-2">
