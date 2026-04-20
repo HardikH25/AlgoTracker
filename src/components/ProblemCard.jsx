@@ -6,7 +6,10 @@ export default function ProblemCard({ problem, onDelete, children }) {
   const [showNotes, setShowNotes] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
 
-  const handleDelete = async () => {
+  const handleDelete = async (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+
     if (window.confirm("Are you sure you want to delete this problem?")) {
       setIsDeleting(true);
       try {

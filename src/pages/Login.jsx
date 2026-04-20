@@ -43,7 +43,7 @@ export default function Login() {
           </div>
         )}
         
-        <form onSubmit={handleSubmit} className="flex flex-col gap-6">
+        <form onSubmit={handleSubmit} className="flex flex-col gap-6" autoComplete="off">
           <div>
             <label className="block text-zinc-400 font-bold mb-2 ml-1 text-[10px] uppercase tracking-[0.2em]">Email Address</label>
             <input 
@@ -51,6 +51,7 @@ export default function Login() {
               required 
               value={email}
               onChange={(e) => setEmail(e.target.value)}
+              autoComplete="new-email"
               className="w-full px-6 py-4 bg-black/40 border border-white/5 text-zinc-100 rounded-2xl focus:border-indigo-500/50 focus:bg-black/60 focus:ring-1 focus:ring-indigo-500/50 focus:outline-none transition-all placeholder-zinc-700 font-medium"
               placeholder="you@example.com"
             />
@@ -65,6 +66,7 @@ export default function Login() {
               required 
               value={password}
               onChange={(e) => setPassword(e.target.value)}
+              autoComplete="new-password"
               className="w-full px-6 py-4 bg-black/40 border border-white/5 text-zinc-100 rounded-2xl focus:border-indigo-500/50 focus:bg-black/60 focus:ring-1 focus:ring-indigo-500/50 focus:outline-none transition-all placeholder-zinc-700 font-medium"
               placeholder="••••••••"
             />
