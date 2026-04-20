@@ -149,10 +149,16 @@ export default function ProblemLogger() {
       if (!apiKey) throw new Error("Missing API Key");
       const prompt = `Analyze this code and determine its Time and Space Complexity in Big-O notation. Also provide a 1-sentence explanation of why.\nFormat your response exactly like this:\nTime: O(...)\nSpace: O(...)\nExplanation: ...\n\nCode:\n${codeSnippet}`;
 
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second strict timeout
+
       const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent?key=${apiKey}`, {
         method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
+        body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] }),
+        signal: controller.signal
       });
+
+      clearTimeout(timeoutId);
 
       if (!response.ok) {
         throw new Error("API Limit Reached");
