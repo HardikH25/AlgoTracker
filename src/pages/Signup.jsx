@@ -35,10 +35,10 @@ export default function Signup() {
     <div className="flex items-center justify-center min-h-[calc(100vh-120px)] animate-fade-in p-6">
       <div className="w-full max-w-md bg-[#111111] p-10 rounded-[40px] shadow-2xl border border-white/5 animate-slide-up">
         <div className="flex flex-col items-center mb-10">
-          <div className="w-16 h-16 bg-indigo-600 rounded-2xl flex items-center justify-center text-white font-black text-3xl mb-6 shadow-2xl shadow-indigo-500/20">
-            C
+          <div className="w-16 h-16 bg-gradient-to-br from-black via-zinc-800 to-zinc-600 rounded-2xl flex items-center justify-center text-white font-black text-3xl mb-6 shadow-2xl border border-white/10">
+            A
           </div>
-          <h2 className="text-3xl font-black text-white tracking-tighter">Join CodeTrack</h2>
+          <h2 className="text-3xl font-black text-white tracking-tighter">Join AlgoTracker</h2>
           <p className="text-zinc-500 text-sm mt-2 font-medium">Start mastering your DSA journey today.</p>
         </div>
 
