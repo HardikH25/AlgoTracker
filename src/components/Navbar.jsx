@@ -43,7 +43,7 @@ export default function Navbar() {
   ];
 
   return (
-    <nav className="bg-black/60 backdrop-blur-xl border-b border-white/5 text-zinc-300 py-4 px-6 sm:px-8 sticky top-0 z-50">
+    <nav className={`border-b border-white/5 text-zinc-300 py-4 px-6 sm:px-8 sticky top-0 z-50 transition-colors duration-500 ${isMenuOpen ? 'bg-black' : 'bg-black/60 backdrop-blur-xl'}`}>
       <div className="max-w-6xl mx-auto flex justify-between items-center">
         <Link to="/" className="flex items-center gap-2 group z-50" onClick={() => setIsMenuOpen(false)}>
           <div className="w-8 h-8 bg-gradient-to-br from-black via-zinc-800 to-zinc-600 rounded-lg flex items-center justify-center text-white font-black text-xl group-hover:scale-110 transition-transform shadow-[0_0_15px_rgba(255,255,255,0.05)] border border-white/10">
@@ -91,7 +91,7 @@ export default function Navbar() {
             </div>
 
             {/*mobile nav panel*/}
-            <div className={`fixed inset-0 bg-[#0a0a0a] z-40 md:hidden transition-all duration-500 flex flex-col pt-24 px-6 ${isMenuOpen ? "opacity-100 translate-x-0" : "opacity-0 translate-x-full pointer-events-none"
+            <div className={`fixed inset-0 bg-black z-40 md:hidden transition-all duration-500 flex flex-col pt-24 px-6 ${isMenuOpen ? "opacity-100 translate-x-0" : "opacity-0 translate-x-full pointer-events-none"
               }`}>
               <div className="flex flex-col gap-2">
                 <p className="text-[10px] font-bold text-zinc-600 uppercase tracking-widest mb-4 px-2">Navigation</p>
