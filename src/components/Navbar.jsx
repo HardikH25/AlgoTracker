@@ -18,21 +18,19 @@ export default function Navbar() {
     }
   }
 
-  const navItemClass = ({ isActive }) => 
-    `transition-all duration-300 relative py-1 px-1 flex items-center gap-2 ${
-      isActive 
-        ? "text-white font-bold" 
-        : "text-zinc-500 hover:text-zinc-300 font-medium"
+  const navItemClass = ({ isActive }) =>
+    `transition-all duration-300 relative py-1 px-1 flex items-center gap-2 ${isActive
+      ? "text-white font-bold"
+      : "text-zinc-500 hover:text-zinc-300 font-medium"
     }`;
 
-  const mobileNavItemClass = ({ isActive }) => 
-    `flex items-center gap-4 px-6 py-4 rounded-2xl transition-all duration-300 ${
-      isActive 
-        ? "bg-indigo-500/10 text-white font-bold border border-indigo-500/20" 
-        : "text-zinc-400 hover:bg-white/5 hover:text-zinc-200"
+  const mobileNavItemClass = ({ isActive }) =>
+    `flex items-center gap-4 px-6 py-4 rounded-2xl transition-all duration-300 ${isActive
+      ? "bg-indigo-500/10 text-white font-bold border border-indigo-500/20"
+      : "text-zinc-400 hover:bg-white/5 hover:text-zinc-200"
     }`;
 
-  const activeIndicator = ({ isActive }) => 
+  const activeIndicator = ({ isActive }) =>
     isActive ? (
       <span className="absolute -bottom-1 left-1 right-1 h-0.5 bg-indigo-500 rounded-full animate-fade-in"></span>
     ) : null;
@@ -55,10 +53,10 @@ export default function Navbar() {
             AlgoTracker
           </span>
         </Link>
-        
+
         {currentUser ? (
           <>
-            {/* Desktop Navigation */}
+            {/* desktop nav*/}
             <div className="hidden md:flex gap-8 items-center text-sm">
               <div className="flex gap-6 items-center">
                 {navLinks.map((link) => (
@@ -72,8 +70,8 @@ export default function Navbar() {
                   </NavLink>
                 ))}
               </div>
-              
-              <button 
+
+              <button
                 onClick={handleLogout}
                 className="px-6 py-2 rounded-xl bg-zinc-900 border border-white/10 text-zinc-400 hover:text-white hover:border-white/20 transition-all ml-4 text-xs font-bold tracking-widest uppercase"
               >
@@ -81,9 +79,9 @@ export default function Navbar() {
               </button>
             </div>
 
-            {/* Mobile Menu Toggle */}
+            {/* mobile hamnav*/}
             <div className="flex md:hidden items-center gap-4">
-              <button 
+              <button
                 onClick={() => setIsMenuOpen(!isMenuOpen)}
                 className="p-2 text-zinc-400 hover:text-white transition-colors z-50 focus:outline-none"
                 aria-label="Toggle menu"
@@ -92,16 +90,15 @@ export default function Navbar() {
               </button>
             </div>
 
-            {/* Mobile Navigation Panel */}
-            <div className={`fixed inset-0 bg-black/95 backdrop-blur-2xl z-40 md:hidden transition-all duration-500 flex flex-col pt-24 px-6 ${
-              isMenuOpen ? "opacity-100 translate-x-0" : "opacity-0 translate-x-full pointer-events-none"
-            }`}>
+            {/*mobile nav panel*/}
+            <div className={`fixed inset-0 bg-[#0a0a0a] z-40 md:hidden transition-all duration-500 flex flex-col pt-24 px-6 ${isMenuOpen ? "opacity-100 translate-x-0" : "opacity-0 translate-x-full pointer-events-none"
+              }`}>
               <div className="flex flex-col gap-2">
                 <p className="text-[10px] font-bold text-zinc-600 uppercase tracking-widest mb-4 px-2">Navigation</p>
                 {navLinks.map((link) => (
-                  <NavLink 
-                    key={link.to} 
-                    to={link.to} 
+                  <NavLink
+                    key={link.to}
+                    to={link.to}
                     className={mobileNavItemClass}
                     onClick={() => setIsMenuOpen(false)}
                   >
@@ -112,7 +109,7 @@ export default function Navbar() {
               </div>
 
               <div className="mt-auto mb-10 pt-6 border-t border-white/5">
-                <button 
+                <button
                   onClick={handleLogout}
                   className="w-full flex items-center justify-between p-6 rounded-3xl bg-zinc-900/50 border border-white/5 text-zinc-300 hover:text-white hover:border-white/10 transition-all"
                 >
