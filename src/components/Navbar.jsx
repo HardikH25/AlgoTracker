@@ -8,6 +8,7 @@ export default function Navbar() {
   const navigate = useNavigate();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
+  // Log the user out and send them to the login page
   async function handleLogout() {
     try {
       await logout();
@@ -18,23 +19,27 @@ export default function Navbar() {
     }
   }
 
+  // Style for desktop nav links — bold white if active, grey otherwise
   const navItemClass = ({ isActive }) =>
     `transition-all duration-300 relative py-1 px-1 flex items-center gap-2 ${isActive
       ? "text-white font-bold"
       : "text-zinc-500 hover:text-zinc-300 font-medium"
     }`;
 
+  // Style for mobile nav links
   const mobileNavItemClass = ({ isActive }) =>
     `flex items-center gap-4 px-6 py-4 rounded-2xl transition-all duration-300 ${isActive
       ? "bg-indigo-500/10 text-white font-bold border border-indigo-500/20"
       : "text-zinc-400 hover:bg-white/5 hover:text-zinc-200"
     }`;
 
+  // Small underline shown under the active desktop link
   const activeIndicator = ({ isActive }) =>
     isActive ? (
       <span className="absolute -bottom-1 left-1 right-1 h-0.5 bg-indigo-500 rounded-full animate-fade-in"></span>
     ) : null;
 
+  // All the nav links in one list so we can loop through them
   const navLinks = [
     { to: "/", label: "Dashboard", icon: LayoutDashboard },
     { to: "/sheets", label: "Sheets", icon: Database },
@@ -56,7 +61,7 @@ export default function Navbar() {
 
         {currentUser ? (
           <>
-            {/* desktop nav*/}
+            {/* Desktop navigation — only shows on medium screens and up */}
             <div className="hidden md:flex gap-8 items-center text-sm">
               <div className="flex gap-6 items-center">
                 {navLinks.map((link) => (
@@ -79,7 +84,7 @@ export default function Navbar() {
               </button>
             </div>
 
-            {/* mobile hamnav*/}
+            {/* Hamburger button — only shows on small screens */}
             <div className="flex md:hidden items-center gap-4">
               <button
                 onClick={() => setIsMenuOpen(!isMenuOpen)}
@@ -90,7 +95,7 @@ export default function Navbar() {
               </button>
             </div>
 
-            {/*mobile nav panel*/}
+            {/* Full-screen mobile menu panel */}
             <div className={`fixed inset-0 bg-black z-40 md:hidden transition-all duration-500 flex flex-col pt-24 px-6 ${isMenuOpen ? "opacity-100 translate-x-0" : "opacity-0 translate-x-full pointer-events-none"
               }`}>
               <div className="flex flex-col gap-2">
@@ -108,6 +113,7 @@ export default function Navbar() {
                 ))}
               </div>
 
+              {/* Logout button at the bottom of the mobile menu */}
               <div className="mt-auto mb-10 pt-6 border-t border-white/5">
                 <button
                   onClick={handleLogout}
@@ -135,4 +141,3 @@ export default function Navbar() {
     </nav>
   );
 }
-

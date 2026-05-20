@@ -54,7 +54,11 @@
       transparent,
       rgba(255, 255, 255, 0.05),
       transparent);
-  animation: shine 2s infinite;
+  transform: translateX(-100%);
+}
+
+.animate-shine:hover::after {
+  animation: shine 1s ease-in-out;
 }
 
 /* Scrollbar styling */

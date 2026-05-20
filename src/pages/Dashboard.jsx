@@ -15,12 +15,13 @@ export default function Dashboard() {
   const [filterStatus, setFilterStatus] = useState("All");
   const [filterSheet, setFilterSheet] = useState("All");
 
-  //fetchhing on mounting
+  // Load all problems from the database when the page opens
   useEffect(() => {
     async function fetchProblems() {
-      if (!currentUser) return;
+      if (!currentUser) return; // do nothing if no one is logged in
       try {
         setLoading(true);
+        // Only fetch problems that belong to the current user
         const q = query(
           collection(db, "problems"),
           where("userId", "==", currentUser.uid)
@@ -31,6 +32,7 @@ export default function Dashboard() {
           ...doc.data()
         }));
 
+        // Sort newest problems to the top
         data.sort((a, b) => {
           const timeA = a.createdAt?.seconds || 0;
           const timeB = b.createdAt?.seconds || 0;
@@ -48,19 +50,18 @@ export default function Dashboard() {
     fetchProblems();
   }, [currentUser]);
 
+  // Delete a problem from the database and remove it from the screen
   const handleDelete = useCallback(async (problemId) => {
-    if (window.confirm("Are you sure you want to delete this problem?")) {
-      try {
-        await deleteDoc(doc(db, "problems", problemId));
-        setProblems(prev => prev.filter(p => p.id !== problemId));
-      } catch (err) {
-        console.error("Delete error:", err);
-        alert("Failed to delete problem.");
-      }
+    try {
+      await deleteDoc(doc(db, "problems", problemId));
+      setProblems(prev => prev.filter(p => p.id !== problemId));
+    } catch (err) {
+      console.error("Delete error:", err);
+      alert("Failed to delete problem.");
     }
   }, []);
 
-  //stats
+  // Calculate summary numbers for the stat cards
   const stats = useMemo(() => {
     const total = problems.length;
     const solvedCount = problems.filter(p => p.isSolved).length;
@@ -73,38 +74,39 @@ export default function Dashboard() {
     return { total, solvedCount, successRate, easyCount, mediumCount, hardCount };
   }, [problems]);
 
-  //streak Calculation
+  // Count how many days in a row the user has solved at least one problem
   const streak = useMemo(() => {
     if (!problems.length) return 0;
 
+    // Get a unique list of dates when problems were logged
     const dates = [...new Set(problems.map(p => {
       const date = p.createdAt?.seconds ? new Date(p.createdAt.seconds * 1000) : new Date();
-      return date.toLocaleDateString("en-CA");
+      return date.toLocaleDateString("en-CA"); // format: YYYY-MM-DD
     }))].sort((a, b) => new Date(b) - new Date(a));
 
     let currentStreak = 0;
-    let checkDate = new Date();
-
-    //to date string
-    const todayStr = checkDate.toLocaleDateString("en-CA");
+    const todayStr = new Date().toLocaleDateString("en-CA");
     let targetDate = new Date();
 
+    // If nothing was logged today, start checking from yesterday
     if (!dates.includes(todayStr)) {
-      targetDate.setDate(targetDate.getDate() - 1); //start checking from yesterday
+      targetDate.setDate(targetDate.getDate() - 1);
     }
 
+    // Count backwards day by day while there's a match
     for (let i = 0; i < 365; i++) {
       const targetStr = targetDate.toLocaleDateString("en-CA");
       if (dates.includes(targetStr)) {
         currentStreak++;
         targetDate.setDate(targetDate.getDate() - 1);
       } else {
-        break;
+        break; // gap found, streak is over
       }
     }
     return currentStreak;
   }, [problems]);
 
+  // Find the 3 most-used tags across all problems
   const topTags = useMemo(() => {
     const counts = {};
     problems.forEach(p => {
@@ -117,12 +119,13 @@ export default function Dashboard() {
     return Object.entries(counts).sort((a, b) => b[1] - a[1]).slice(0, 3);
   }, [problems]);
 
-  //unique sheet for filter
+  // Get the list of unique sheet names to populate the filter dropdown
   const uniqueSheets = useMemo(() => {
     const sheets = new Set(problems.map(p => p.sheet).filter(s => s && s !== "None"));
     return Array.from(sheets).sort();
   }, [problems]);
 
+  // Filter the problems list based on whatever the user has selected
   const displayedProblems = useMemo(() => {
     return problems.filter(p => {
       const matchTitle = p.title.toLowerCase().includes(searchTerm.toLowerCase());
@@ -138,6 +141,7 @@ export default function Dashboard() {
     });
   }, [problems, searchTerm, filterDifficulty, filterStatus, filterSheet]);
 
+  // Show a spinner while problems are loading for the first time
   if (loading && problems.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh] animate-fade-in">
@@ -149,6 +153,7 @@ export default function Dashboard() {
 
   return (
     <div className="p-8 max-w-6xl mx-auto animate-fade-in">
+      {/* Show an error banner if fetching from the database failed */}
       {fetchError && (
         <div className="bg-red-500/20 border border-red-500/50 text-red-300 px-5 py-4 rounded-2xl mb-6 text-sm font-medium flex items-start gap-3">
           <span className="text-red-400 text-lg">⚠️</span>
@@ -165,7 +170,8 @@ export default function Dashboard() {
           <p className="text-zinc-500 font-medium">Welcome back, analyze your performance and keep pushing.</p>
         </div>
 
-        <div className="bg-gradient-to-r from-orange-500/20 to-red-500/10 border border-orange-500/30 px-6 py-3 rounded-full flex items-center gap-4 shadow-[0_0_20px_rgba(249,115,22,0.15)] animate-slide-up">
+        {/* Streak badge */}
+        <div className="bg-gradient-to-r from-orange-500/20 to-red-500/10 border border-orange-500/30 px-6 py-3 rounded-full flex items-center gap-4 shadow-[0_0_20px_rgba(249,115,22,0.15)] animate-slide-up animate-shine">
           <span className="text-3xl filter drop-shadow-lg">🔥</span>
           <div>
             <div className="text-orange-500 font-black text-xl leading-none">{streak} Day Streak</div>
@@ -174,9 +180,10 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* stats*/}
+      {/* Stat cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
 
+        {/* Solved / total with a circle progress ring */}
         <div className="bg-[#111111] p-8 rounded-3xl border border-white/5 flex items-center gap-8 animate-slide-up" style={{ animationDelay: '0.1s' }}>
           <div className="relative w-24 h-24 flex-shrink-0">
             <svg className="w-full h-full transform -rotate-90">
@@ -199,10 +206,11 @@ export default function Dashboard() {
           </div>
         </div>
 
-        {/* difficulty bar*/}
+        {/* Difficulty bar chart */}
         <div className="bg-[#111111] p-8 rounded-3xl border border-white/5 md:col-span-2 animate-slide-up" style={{ animationDelay: '0.2s' }}>
           <h3 className="text-zinc-500 text-xs font-bold uppercase tracking-widest mb-6">Difficulty Distribution</h3>
 
+          {/* Coloured bar split into Easy / Medium / Hard */}
           <div className="flex h-3 w-full rounded-full bg-zinc-900 overflow-hidden mb-6">
             <div className="bg-[#4C9C62] h-full transition-all duration-1000" style={{ width: `${(stats.easyCount / stats.total) * 100 || 0}%` }}></div>
             <div className="bg-yellow-600 h-full transition-all duration-1000" style={{ width: `${(stats.mediumCount / stats.total) * 100 || 0}%` }}></div>
@@ -224,6 +232,7 @@ export default function Dashboard() {
             </div>
           </div>
 
+          {/* Top 3 most-practiced tags */}
           {topTags.length > 0 && (
             <div className="mt-8 border-t border-white/5 pt-6">
               <h4 className="text-zinc-500 text-[10px] font-bold uppercase tracking-widest mb-4">Top Practiced Topics</h4>
@@ -239,7 +248,7 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* controls */}
+      {/* Search and filter controls */}
       <div className="flex flex-col md:flex-row justify-between items-center mb-8 gap-6 animate-slide-up" style={{ animationDelay: '0.3s' }}>
         <h2 className="text-2xl font-bold text-white tracking-tight">Activity Log</h2>
         <div className="flex gap-4 w-full md:w-auto overflow-x-auto pb-4 md:pb-0 scrollbar-hide">
@@ -282,6 +291,7 @@ export default function Dashboard() {
         </div>
       </div>
 
+      {/* Problem list — empty state, no filter match, or the cards */}
       {problems.length === 0 && !loading ? (
         <div className="bg-[#111111] p-16 rounded-[40px] border border-dashed border-white/5 text-center flex flex-col items-center animate-slide-up" style={{ animationDelay: '0.4s' }}>
           <div className="w-20 h-20 bg-indigo-500/10 rounded-3xl flex items-center justify-center text-indigo-500 mb-6">
@@ -296,7 +306,7 @@ export default function Dashboard() {
         </div>
       ) : (
         <div className="grid gap-5 animate-slide-up" style={{ animationDelay: '0.4s' }}>
-          {displayedProblems.map((problem, idx) => (
+          {displayedProblems.map((problem) => (
             <div key={problem.id} className="transition-all hover:translate-x-1 duration-300">
               <ProblemCard problem={problem} onDelete={handleDelete} />
             </div>

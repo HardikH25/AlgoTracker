@@ -9,12 +9,13 @@ export default function Revision() {
   const [loading, setLoading] = useState(true);
   const { currentUser } = useAuth();
 
-  //fetch problems on mount
+  // Load all problems from the database when the page opens
   useEffect(() => {
     async function fetchProblems() {
-      if (!currentUser) return;
+      if (!currentUser) return; // skip if no one is logged in
       try {
         setLoading(true);
+        // Only get problems belonging to the current user
         const q = query(
           collection(db, "problems"),
           where("userId", "==", currentUser.uid)
@@ -34,12 +35,16 @@ export default function Revision() {
     fetchProblems();
   }, [currentUser]);
 
+  // Only show problems that the user marked as needing revision
   const revisionProblems = problems.filter(p => p.needsRevision === true);
+
+  // Turn off the revision flag for a problem (user has learned it)
   async function handleRemoveRevision(problemId) {
     try {
       const problemRef = doc(db, "problems", problemId);
       await updateDoc(problemRef, { needsRevision: false });
 
+      // Update the list on screen without reloading from the database
       setProblems(prev => prev.map(p =>
         p.id === problemId ? { ...p, needsRevision: false } : p
       ));
@@ -48,14 +53,13 @@ export default function Revision() {
     }
   }
 
+  // Delete the problem from the database
   async function handleDelete(problemId) {
-    if (window.confirm("Are you sure you want to delete this problem?")) {
-      try {
-        await deleteDoc(doc(db, "problems", problemId));
-        setProblems(prev => prev.filter(p => p.id !== problemId));
-      } catch (err) {
-        alert("Error deleting problem.");
-      }
+    try {
+      await deleteDoc(doc(db, "problems", problemId));
+      setProblems(prev => prev.filter(p => p.id !== problemId));
+    } catch (err) {
+      alert("Error deleting problem.");
     }
   }
 
@@ -80,6 +84,7 @@ export default function Revision() {
               problem={problem}
               onDelete={handleDelete}
             >
+              {/* Button to mark a problem as fully learned */}
               <button
                 onClick={() => handleRemoveRevision(problem.id)}
                 className="bg-[#00520A] text-white hover:bg-[#003806] px-3 py-1.5 rounded-lg text-sm font-semibold transition-colors shadow-lg shadow-[#00520A]/20 whitespace-nowrap cursor-pointer"

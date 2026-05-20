@@ -58,9 +58,7 @@ export default function Login() {
           </div>
           
           <div>
-            <div className="flex justify-between items-center mb-2 ml-1">
-              <label className="block text-zinc-400 font-bold text-[10px] uppercase tracking-[0.2em]">Password</label>
-            </div>
+            <label className="block text-zinc-400 font-bold mb-2 ml-1 text-[10px] uppercase tracking-[0.2em]">Password</label>
             <input 
               type="password" 
               required 

@@ -5,8 +5,8 @@ import { useAuth } from "../context/AuthContext";
 import { useNavigate, useParams } from "react-router-dom";
 
 export default function ProblemLogger() {
-  const { id } = useParams();
-  const isEditMode = Boolean(id);
+  const { id } = useParams();         // if there's an ID in the URL, we are editing
+  const isEditMode = Boolean(id);     // true = editing, false = adding new
   const titleRef = useRef(null);
 
   const [url, setUrl] = useState("");
@@ -29,16 +29,16 @@ export default function ProblemLogger() {
   const { currentUser } = useAuth();
   const navigate = useNavigate();
 
-  //auto focus
+  // Put the cursor in the title box as soon as the page opens
   useEffect(() => {
     if (titleRef.current) {
       titleRef.current.focus();
     }
   }, []);
 
-  //load problem data
+  // If editing, load the existing problem data from the database
   useEffect(() => {
-    if (!isEditMode) return;
+    if (!isEditMode) return; // skip this if we're adding a new problem
 
     async function fetchProblem() {
       try {
@@ -47,6 +47,7 @@ export default function ProblemLogger() {
         const docSnap = await getDoc(docRef);
 
         if (docSnap.exists()) {
+          // Fill all the form fields with the saved data
           const data = docSnap.data();
           setUrl(data.url || "");
           setTitle(data.title || "");
@@ -73,6 +74,7 @@ export default function ProblemLogger() {
     fetchProblem();
   }, [id, isEditMode]);
 
+  // Auto-detect the platform from the URL the user types
   useEffect(() => {
     if (!url || isEditMode) return;
     const lowerUrl = url.toLowerCase();
@@ -84,19 +86,23 @@ export default function ProblemLogger() {
     else if (lowerUrl.includes("geeksforgeeks.org")) setPlatform("GeeksForGeeks");
   }, [url, isEditMode]);
 
+  // Save (or update) the problem when the form is submitted
   async function handleSubmit(e) {
     e.preventDefault();
+
+    // Clean up what the user typed
     const cleanTitle = title.trim();
     const cleanUrl = url.trim();
     const cleanSheet = sheet.trim() || "None";
     const cleanTime = Number(timeTaken);
 
+    // Simple checks before saving
     if (!cleanTitle) return setError("Title is required");
     if (cleanTime < 0) return setError("Time taken cannot be negative");
 
     if (cleanUrl) {
       try {
-        new URL(cleanUrl);
+        new URL(cleanUrl); // check if the URL is a valid web address
       } catch (err) {
         return setError("Please enter a valid URL (including http:// or https://)");
       }
@@ -106,6 +112,7 @@ export default function ProblemLogger() {
       setError("");
       setLoading(true);
 
+      // Build the object we will save to the database
       const problemData = {
         userId: currentUser.uid,
         url: cleanUrl,
@@ -123,15 +130,17 @@ export default function ProblemLogger() {
       };
 
       if (isEditMode) {
+        // Update the existing document
         await updateDoc(doc(db, "problems", id), problemData);
       } else {
+        // Create a brand new document
         await addDoc(collection(db, "problems"), {
           ...problemData,
           createdAt: serverTimestamp()
         });
       }
 
-      navigate("/");
+      navigate("/"); // go back to the dashboard after saving
     } catch (err) {
       setError(`Failed to ${isEditMode ? 'update' : 'add'} problem: ` + err.message);
     } finally {
@@ -139,6 +148,7 @@ export default function ProblemLogger() {
     }
   }
 
+  // Send the code snippet to Gemini AI and get complexity info back
   async function handleAIAnalysis() {
     if (!codeSnippet.trim()) return setError("Please paste some code to analyze first.");
     setError("");
@@ -146,12 +156,14 @@ export default function ProblemLogger() {
     try {
       const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
       if (!apiKey) throw new Error("Missing API Key");
+
       const prompt = `Analyze this code and determine its Time and Space Complexity in Big-O notation. Also provide a 1-sentence explanation of why.\nFormat your response exactly like this:\nTime: O(...)\nSpace: O(...)\nExplanation: ...\n\nCode:\n${codeSnippet}`;
 
+      // Set a 10-second limit — if AI takes longer, cancel the request
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 10000); //10sec timeout
+      const timeoutId = setTimeout(() => controller.abort(), 10000);
 
-      const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent?key=${apiKey}`, {
+      const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${apiKey}`, {
         method: "POST", headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] }),
         signal: controller.signal
@@ -165,9 +177,12 @@ export default function ProblemLogger() {
 
       const data = await response.json();
       const text = data.candidates[0].content.parts[0].text;
+
+      // Add the AI result to the notes box
       setNotes((prev) => prev ? prev + "\n\n--- AI Analysis ---\n" + text : "--- AI Analysis ---\n" + text);
 
     } catch (err) {
+      // If the real API fails, show a fake result so demos don't break
       console.warn("Real API failed, falling back to Graceful Mock for Viva Presentation:", err);
       const mockResult = `Time: O(N)\nSpace: O(1)\nExplanation: This is a simulated fallback response because the AI Free-Tier quota was exceeded during your presentation.`;
       setNotes((prev) => prev ? prev + "\n\n--- AI Analysis (Graceful Fallback) ---\n" + mockResult : "--- AI Analysis (Graceful Fallback) ---\n" + mockResult);
@@ -176,6 +191,7 @@ export default function ProblemLogger() {
     }
   }
 
+  // Show a loading message while the existing problem data is being fetched
   if (fetching) {
     return <div className="p-8 text-center text-zinc-500">Loading problem data...</div>;
   }
@@ -194,12 +210,14 @@ export default function ProblemLogger() {
 
       <form onSubmit={handleSubmit} className="relative bg-[#111111] bg-opacity-80 backdrop-blur-2xl p-8 sm:p-10 rounded-3xl border border-white/5 shadow-2xl flex flex-col gap-7 overflow-hidden">
 
+        {/* Decorative top line */}
         <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-indigo-500/20 to-transparent"></div>
 
+        {/* URL field */}
         <div>
           <label className="block text-zinc-300 font-semibold mb-2 text-xs uppercase tracking-wider">Problem URL <span className="opacity-50">(Optional)</span></label>
           <input
-            type="url"
+            type="text"
             value={url}
             onChange={(e) => setUrl(e.target.value)}
             className="w-full px-5 py-3.5 bg-black/40 border border-white/5 text-zinc-200 rounded-2xl focus:border-indigo-500/50 focus:bg-black/60 focus:ring-1 focus:ring-indigo-500/50 focus:outline-none transition-all placeholder-zinc-700 font-medium"
@@ -207,6 +225,7 @@ export default function ProblemLogger() {
           />
         </div>
 
+        {/* Title field */}
         <div>
           <label className="block text-zinc-300 font-semibold mb-2 text-xs uppercase tracking-wider">Problem Title <span className="text-red-500">*</span></label>
           <input
@@ -220,6 +239,7 @@ export default function ProblemLogger() {
           />
         </div>
 
+        {/* Platform and Difficulty side by side */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-7">
           <div>
             <label className="block text-zinc-300 font-semibold mb-2 text-xs uppercase tracking-wider">Platform</label>
@@ -236,9 +256,7 @@ export default function ProblemLogger() {
                 <option value="GeeksForGeeks">GeeksForGeeks</option>
                 <option value="Other">Other</option>
               </select>
-              <div className="absolute inset-y-0 right-4 flex items-center pointer-events-none text-zinc-500">
-                ▼
-              </div>
+              <div className="absolute inset-y-0 right-4 flex items-center pointer-events-none text-zinc-500">▼</div>
             </div>
           </div>
           <div>
@@ -253,13 +271,12 @@ export default function ProblemLogger() {
                 <option value="Medium">Medium</option>
                 <option value="Hard">Hard</option>
               </select>
-              <div className="absolute inset-y-0 right-4 flex items-center pointer-events-none text-zinc-500">
-                ▼
-              </div>
+              <div className="absolute inset-y-0 right-4 flex items-center pointer-events-none text-zinc-500">▼</div>
             </div>
           </div>
         </div>
 
+        {/* Time taken and Training sheet side by side */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-7">
           <div>
             <label className="block text-zinc-300 font-semibold mb-2 text-xs uppercase tracking-wider">Time Taken <span className="opacity-50">(mins)</span></label>
@@ -283,6 +300,7 @@ export default function ProblemLogger() {
           </div>
         </div>
 
+        {/* Tags field */}
         <div>
           <label className="block text-zinc-300 font-semibold mb-2 text-xs uppercase tracking-wider">Tags / Categories <span className="opacity-50">(Comma separated)</span></label>
           <input
@@ -294,6 +312,7 @@ export default function ProblemLogger() {
           />
         </div>
 
+        {/* Solved and Revision checkboxes */}
         <div className="flex flex-col sm:flex-row bg-black/20 p-5 rounded-2xl border border-white/5 gap-6 sm:gap-10 mt-2">
           <label className="flex items-center gap-4 cursor-pointer group">
             <div className={`w-6 h-6 rounded flex items-center justify-center transition-all ${isSolved ? 'bg-[#4C9C62] shadow-[0_0_10px_rgba(76,156,98,0.3)]' : 'bg-black border border-white/10 group-hover:border-white/20'}`}>
@@ -322,6 +341,7 @@ export default function ProblemLogger() {
           </label>
         </div>
 
+        {/* Code snippet box with AI analyze button */}
         <div className="mt-2 text-zinc-200">
           <label className="block text-zinc-300 font-semibold mb-2 text-xs uppercase tracking-wider flex justify-between items-end">
             Solution Code
@@ -343,6 +363,7 @@ export default function ProblemLogger() {
           ></textarea>
         </div>
 
+        {/* Notes box */}
         <div className="mt-2">
           <label className="block text-zinc-300 font-semibold mb-2 text-xs uppercase tracking-wider">Notes / Lightbulb Moments</label>
           <textarea
@@ -354,11 +375,13 @@ export default function ProblemLogger() {
           ></textarea>
         </div>
 
+        {/* Submit button */}
         <button
           type="submit"
           disabled={loading}
           className="relative group bg-gradient-to-b from-indigo-600 to-indigo-900 hover:from-indigo-500 hover:to-indigo-800 text-white font-bold py-4 px-6 rounded-2xl mt-4 disabled:opacity-50 transition-all border border-white/10 hover:border-white/20 shadow-2xl overflow-hidden"
         >
+          {/* Shimmer effect on hover */}
           <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000 ease-in-out"></div>
           <span className="relative z-10 tracking-widest uppercase text-sm">
             {loading ? "Processing..." : (isEditMode ? "Update Problem" : "Commit Problem")}

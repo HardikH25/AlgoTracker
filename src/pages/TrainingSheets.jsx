@@ -8,12 +8,13 @@ export default function TrainingSheets() {
   const [loading, setLoading] = useState(true);
   const { currentUser } = useAuth();
 
-  //fetch problems on mount
+  // Load all problems from the database when the page opens
   useEffect(() => {
     async function fetchProblems() {
-      if (!currentUser) return;
+      if (!currentUser) return; // skip if no one is logged in
       try {
         setLoading(true);
+        // Only get problems belonging to the current user
         const q = query(
           collection(db, "problems"),
           where("userId", "==", currentUser.uid)
@@ -33,11 +34,12 @@ export default function TrainingSheets() {
     fetchProblems();
   }, [currentUser]);
 
+  // Group problems by sheet name and count how many are solved in each
   const sheetStats = useMemo(() => {
     const sheets = {};
 
     problems.forEach(p => {
-      if (!p.sheet || p.sheet === "None") return;
+      if (!p.sheet || p.sheet === "None") return; // skip problems with no sheet
 
       if (!sheets[p.sheet]) {
         sheets[p.sheet] = { name: p.sheet, total: 0, solved: 0 };
@@ -69,6 +71,7 @@ export default function TrainingSheets() {
             <div key={sheet.name} className="bg-[#18181b] p-8 rounded-3xl border border-white/5 hover:border-white/10 transition-all shadow-sm">
               <h2 className="text-xl font-bold text-zinc-100 mb-6">{sheet.name}</h2>
 
+              {/* Percentage and count */}
               <div className="flex justify-between items-end mb-3">
                 <span className="text-3xl font-black text-white">
                   {Math.round((sheet.solved / sheet.total) * 100)}%
@@ -78,6 +81,7 @@ export default function TrainingSheets() {
                 </span>
               </div>
 
+              {/* Progress bar */}
               <div className="w-full h-2 bg-black rounded-full overflow-hidden">
                 <div
                   className="h-full bg-[#4C9C62] transition-all duration-1000"
