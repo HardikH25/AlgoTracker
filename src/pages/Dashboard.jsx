@@ -7,6 +7,7 @@ import ProblemCard from "../components/ProblemCard";
 export default function Dashboard() {
   const [problems, setProblems] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [fetchError, setFetchError] = useState("");
   const { currentUser } = useAuth();
 
   const [searchTerm, setSearchTerm] = useState("");
@@ -39,6 +40,7 @@ export default function Dashboard() {
         setProblems(data);
       } catch (err) {
         console.error("Error fetching:", err);
+        setFetchError(err.message || "Failed to load problems. Check Firestore rules.");
       } finally {
         setLoading(false);
       }
@@ -147,6 +149,16 @@ export default function Dashboard() {
 
   return (
     <div className="p-8 max-w-6xl mx-auto animate-fade-in">
+      {fetchError && (
+        <div className="bg-red-500/20 border border-red-500/50 text-red-300 px-5 py-4 rounded-2xl mb-6 text-sm font-medium flex items-start gap-3">
+          <span className="text-red-400 text-lg">⚠️</span>
+          <div>
+            <p className="font-bold text-red-200 mb-1">Failed to load your problems</p>
+            <p className="opacity-80">{fetchError}</p>
+            <p className="mt-2 opacity-60 text-xs">This is likely a Firestore security rules issue. Make sure read access is allowed for authenticated users.</p>
+          </div>
+        </div>
+      )}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-10 gap-4">
         <div>
           <h1 className="text-4xl font-black text-white tracking-tight mb-2">Dashboard</h1>
