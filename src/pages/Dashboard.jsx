@@ -10,10 +10,7 @@ export default function Dashboard() {
   const [fetchError, setFetchError] = useState("");
   const { currentUser } = useAuth();
 
-  const [searchTerm, setSearchTerm] = useState("");
-  const [filterDifficulty, setFilterDifficulty] = useState("All");
-  const [filterStatus, setFilterStatus] = useState("All");
-  const [filterSheet, setFilterSheet] = useState("All");
+
 
   // Load all problems from the database when the page opens
   useEffect(() => {
@@ -50,16 +47,7 @@ export default function Dashboard() {
     fetchProblems();
   }, [currentUser]);
 
-  // Delete a problem from the database and remove it from the screen
-  const handleDelete = useCallback(async (problemId) => {
-    try {
-      await deleteDoc(doc(db, "problems", problemId));
-      setProblems(prev => prev.filter(p => p.id !== problemId));
-    } catch (err) {
-      console.error("Delete error:", err);
-      alert("Failed to delete problem.");
-    }
-  }, []);
+
 
   // Calculate summary numbers for the stat cards
   const stats = useMemo(() => {
@@ -72,38 +60,6 @@ export default function Dashboard() {
     const hardCount = problems.filter(p => p.difficulty === "Hard").length;
 
     return { total, solvedCount, successRate, easyCount, mediumCount, hardCount };
-  }, [problems]);
-
-  // Count how many days in a row the user has solved at least one problem
-  const streak = useMemo(() => {
-    if (!problems.length) return 0;
-
-    // Get a unique list of dates when problems were logged
-    const dates = [...new Set(problems.map(p => {
-      const date = p.createdAt?.seconds ? new Date(p.createdAt.seconds * 1000) : new Date();
-      return date.toLocaleDateString("en-CA"); // format: YYYY-MM-DD
-    }))].sort((a, b) => new Date(b) - new Date(a));
-
-    let currentStreak = 0;
-    const todayStr = new Date().toLocaleDateString("en-CA");
-    let targetDate = new Date();
-
-    // If nothing was logged today, start checking from yesterday
-    if (!dates.includes(todayStr)) {
-      targetDate.setDate(targetDate.getDate() - 1);
-    }
-
-    // Count backwards day by day while there's a match
-    for (let i = 0; i < 365; i++) {
-      const targetStr = targetDate.toLocaleDateString("en-CA");
-      if (dates.includes(targetStr)) {
-        currentStreak++;
-        targetDate.setDate(targetDate.getDate() - 1);
-      } else {
-        break; // gap found, streak is over
-      }
-    }
-    return currentStreak;
   }, [problems]);
 
   // Find the 3 most-used tags across all problems
@@ -119,27 +75,7 @@ export default function Dashboard() {
     return Object.entries(counts).sort((a, b) => b[1] - a[1]).slice(0, 3);
   }, [problems]);
 
-  // Get the list of unique sheet names to populate the filter dropdown
-  const uniqueSheets = useMemo(() => {
-    const sheets = new Set(problems.map(p => p.sheet).filter(s => s && s !== "None"));
-    return Array.from(sheets).sort();
-  }, [problems]);
 
-  // Filter the problems list based on whatever the user has selected
-  const displayedProblems = useMemo(() => {
-    return problems.filter(p => {
-      const matchTitle = p.title.toLowerCase().includes(searchTerm.toLowerCase());
-      const matchDifficulty = filterDifficulty === "All" || p.difficulty === filterDifficulty;
-
-      let matchStatus = true;
-      if (filterStatus === "Solved") matchStatus = p.isSolved === true;
-      else if (filterStatus === "Attempted") matchStatus = p.isSolved === false;
-
-      const matchSheet = filterSheet === "All" || p.sheet === filterSheet;
-
-      return matchTitle && matchDifficulty && matchStatus && matchSheet;
-    });
-  }, [problems, searchTerm, filterDifficulty, filterStatus, filterSheet]);
 
   // Show a spinner while problems are loading for the first time
   if (loading && problems.length === 0) {
@@ -164,31 +100,24 @@ export default function Dashboard() {
           </div>
         </div>
       )}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-10 gap-4">
-        <div>
-          <h1 className="text-4xl font-black text-white tracking-tight mb-2">Dashboard</h1>
-          <p className="text-zinc-500 font-medium">Welcome back, analyze your performance and keep pushing.</p>
-        </div>
 
-        {/* Streak badge */}
-        <div className="bg-gradient-to-r from-orange-500/20 to-red-500/10 border border-orange-500/30 px-6 py-3 rounded-full flex items-center gap-4 shadow-[0_0_20px_rgba(249,115,22,0.15)] animate-slide-up animate-shine">
-          <span className="text-3xl filter drop-shadow-lg">🔥</span>
-          <div>
-            <div className="text-orange-500 font-black text-xl leading-none">{streak} Day Streak</div>
-            <div className="text-orange-400/60 text-[10px] font-bold uppercase tracking-widest mt-1">Keep the momentum going</div>
-          </div>
-        </div>
+      <div className="mb-10">
+        <h1 className="text-4xl font-black text-white tracking-tight mb-2">Dashboard</h1>
+        <p className="text-zinc-500 font-medium">Welcome back, analyze your performance and keep pushing.</p>
       </div>
 
       {/* Stat cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-5 mb-12">
 
         {/* Solved / total with a circle progress ring */}
-        <div className="bg-[#111111] p-8 rounded-3xl border border-white/5 flex items-center gap-8 animate-slide-up" style={{ animationDelay: '0.1s' }}>
+        <div className="relative overflow-hidden bg-gradient-to-b from-[#111] to-[#0c0c0c] p-8 rounded-3xl border border-white/[0.04] flex items-center gap-8 animate-slide-up group card-hover" style={{ animationDelay: '0.1s' }}>
+          {/* Subtle top gradient line accent */}
+          <div className="absolute top-0 left-0 right-0 h-[1px] bg-gradient-to-r from-transparent via-indigo-500/30 to-transparent"></div>
+
           <div className="relative w-24 h-24 flex-shrink-0">
             <svg className="w-full h-full transform -rotate-90">
-              <circle cx="48" cy="48" r="40" stroke="currentColor" strokeWidth="8" fill="transparent" className="text-zinc-800" />
-              <circle cx="48" cy="48" r="40" stroke="currentColor" strokeWidth="8" fill="transparent"
+              <circle cx="48" cy="48" r="40" stroke="currentColor" strokeWidth="6" fill="transparent" className="text-white/[0.03]" />
+              <circle cx="48" cy="48" r="40" stroke="currentColor" strokeWidth="6" fill="transparent"
                 strokeDasharray={2 * Math.PI * 40}
                 strokeDashoffset={2 * Math.PI * 40 * (1 - stats.successRate / 100)}
                 className="text-indigo-500 transition-all duration-1000 ease-out"
@@ -200,119 +129,46 @@ export default function Dashboard() {
             </div>
           </div>
           <div>
-            <h3 className="text-zinc-500 text-xs font-bold uppercase tracking-widest mb-1">Success Rate</h3>
-            <p className="text-3xl font-black text-white">{stats.solvedCount} <span className="text-lg text-zinc-600 font-medium">/ {stats.total}</span></p>
-            <p className="text-xs text-[#4C9C62] font-semibold mt-1">Problems Solved</p>
+            <h3 className="text-zinc-500 text-[11px] font-bold uppercase tracking-widest mb-1.5 group-hover:text-zinc-400 transition-colors">Success Rate</h3>
+            <p className="text-4xl font-black text-white flex items-baseline gap-1">
+              {stats.solvedCount} <span className="text-xl text-zinc-700 font-bold">/ {stats.total}</span>
+            </p>
+            <p className="text-[11px] text-emerald-400 font-bold mt-1.5 uppercase tracking-wide">Problems Solved</p>
           </div>
         </div>
 
         {/* Difficulty bar chart */}
-        <div className="bg-[#111111] p-8 rounded-3xl border border-white/5 md:col-span-2 animate-slide-up" style={{ animationDelay: '0.2s' }}>
-          <h3 className="text-zinc-500 text-xs font-bold uppercase tracking-widest mb-6">Difficulty Distribution</h3>
+        <div className="relative overflow-hidden bg-gradient-to-b from-[#111] to-[#0c0c0c] p-8 rounded-3xl border border-white/[0.04] md:col-span-2 animate-slide-up group card-hover" style={{ animationDelay: '0.2s' }}>
+          {/* Subtle top gradient line accent */}
+          <div className="absolute top-0 left-0 right-0 h-[1px] bg-gradient-to-r from-transparent via-amber-500/20 to-transparent"></div>
+
+          <h3 className="text-zinc-500 text-[11px] font-bold uppercase tracking-widest mb-6 group-hover:text-zinc-400 transition-colors">Difficulty Distribution</h3>
 
           {/* Coloured bar split into Easy / Medium / Hard */}
-          <div className="flex h-3 w-full rounded-full bg-zinc-900 overflow-hidden mb-6">
-            <div className="bg-[#4C9C62] h-full transition-all duration-1000" style={{ width: `${(stats.easyCount / stats.total) * 100 || 0}%` }}></div>
-            <div className="bg-yellow-600 h-full transition-all duration-1000" style={{ width: `${(stats.mediumCount / stats.total) * 100 || 0}%` }}></div>
-            <div className="bg-[#C53030] h-full transition-all duration-1000" style={{ width: `${(stats.hardCount / stats.total) * 100 || 0}%` }}></div>
+          <div className="flex h-2.5 w-full rounded-full bg-white/[0.03] overflow-hidden mb-6">
+            <div className="bg-emerald-400 h-full transition-all duration-1000 rounded-full" style={{ width: `${(stats.easyCount / stats.total) * 100 || 0}%` }}></div>
+            <div className="bg-amber-400 h-full transition-all duration-1000 rounded-full mx-0.5" style={{ width: `${(stats.mediumCount / stats.total) * 100 || 0}%` }}></div>
+            <div className="bg-red-400 h-full transition-all duration-1000 rounded-full" style={{ width: `${(stats.hardCount / stats.total) * 100 || 0}%` }}></div>
           </div>
 
           <div className="grid grid-cols-3 gap-4">
-            <div className="bg-black/20 p-3 rounded-2xl border border-[#4C9C62]/20">
-              <div className="text-[#4C9C62] font-bold text-xl">{stats.easyCount}</div>
-              <div className="text-[10px] text-[#4C9C62]/60 font-black uppercase tracking-widest">Easy</div>
+            <div className="bg-transparent p-4 rounded-2xl border border-emerald-400/20 hover:bg-emerald-400/[0.02] transition-colors">
+              <div className="text-emerald-400 font-black text-2xl mb-1">{stats.easyCount}</div>
+              <div className="text-[10px] text-emerald-400/60 font-bold uppercase tracking-widest">Easy</div>
             </div>
-            <div className="bg-black/20 p-3 rounded-2xl border border-yellow-600/20">
-              <div className="text-yellow-600 font-bold text-xl">{stats.mediumCount}</div>
-              <div className="text-[10px] text-yellow-600/60 font-black uppercase tracking-widest">Medium</div>
+            <div className="bg-transparent p-4 rounded-2xl border border-amber-400/20 hover:bg-amber-400/[0.02] transition-colors">
+              <div className="text-amber-400 font-black text-2xl mb-1">{stats.mediumCount}</div>
+              <div className="text-[10px] text-amber-400/60 font-bold uppercase tracking-widest">Medium</div>
             </div>
-            <div className="bg-black/20 p-3 rounded-2xl border border-[#C53030]/20">
-              <div className="text-[#C53030] font-bold text-xl">{stats.hardCount}</div>
-              <div className="text-[10px] text-[#C53030]/60 font-black uppercase tracking-widest">Hard</div>
+            <div className="bg-transparent p-4 rounded-2xl border border-red-400/20 hover:bg-red-400/[0.02] transition-colors">
+              <div className="text-red-400 font-black text-2xl mb-1">{stats.hardCount}</div>
+              <div className="text-[10px] text-red-400/60 font-bold uppercase tracking-widest">Hard</div>
             </div>
           </div>
-
-          {/* Top 3 most-practiced tags */}
-          {topTags.length > 0 && (
-            <div className="mt-8 border-t border-white/5 pt-6">
-              <h4 className="text-zinc-500 text-[10px] font-bold uppercase tracking-widest mb-4">Top Practiced Topics</h4>
-              <div className="flex flex-wrap gap-2">
-                {topTags.map(([tag, count]) => (
-                  <span key={tag} className="bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 px-3 py-1 rounded-full text-xs font-semibold flex items-center gap-2">
-                    {tag} <span className="text-indigo-500/50 block bg-indigo-500/10 px-1.5 rounded-full text-[10px]">{count}</span>
-                  </span>
-                ))}
-              </div>
-            </div>
-          )}
         </div>
       </div>
 
-      {/* Search and filter controls */}
-      <div className="flex flex-col md:flex-row justify-between items-center mb-8 gap-6 animate-slide-up" style={{ animationDelay: '0.3s' }}>
-        <h2 className="text-2xl font-bold text-white tracking-tight">Activity Log</h2>
-        <div className="flex gap-4 w-full md:w-auto overflow-x-auto pb-4 md:pb-0 scrollbar-hide">
-          <input
-            type="text"
-            placeholder="Search..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="bg-[#111111] border border-white/10 text-white focus:border-indigo-500 rounded-2xl px-6 py-2.5 placeholder-zinc-600 focus:outline-none flex-grow transition-all min-w-[140px]"
-          />
-          <select
-            value={filterStatus}
-            onChange={(e) => setFilterStatus(e.target.value)}
-            className="bg-[#111111] border border-white/10 text-zinc-300 focus:border-indigo-500 rounded-2xl px-6 py-2.5 focus:outline-none transition-all flex-shrink-0 cursor-pointer hover:bg-zinc-900"
-          >
-            <option value="All">All Status</option>
-            <option value="Solved">Solved</option>
-            <option value="Attempted">Attempted</option>
-          </select>
-          <select
-            value={filterDifficulty}
-            onChange={(e) => setFilterDifficulty(e.target.value)}
-            className="bg-[#111111] border border-white/10 text-zinc-300 focus:border-indigo-500 rounded-2xl px-6 py-2.5 focus:outline-none transition-all flex-shrink-0 cursor-pointer hover:bg-zinc-900"
-          >
-            <option value="All">All Levels</option>
-            <option value="Easy">Easy</option>
-            <option value="Medium">Medium</option>
-            <option value="Hard">Hard</option>
-          </select>
-          <select
-            value={filterSheet}
-            onChange={(e) => setFilterSheet(e.target.value)}
-            className="bg-[#111111] border border-white/10 text-zinc-300 focus:border-indigo-500 rounded-2xl px-6 py-2.5 focus:outline-none transition-all flex-shrink-0 cursor-pointer hover:bg-zinc-900 min-w-[120px]"
-          >
-            <option value="All">All Sheets</option>
-            {uniqueSheets.map(sheet => (
-              <option key={sheet} value={sheet}>{sheet}</option>
-            ))}
-          </select>
-        </div>
-      </div>
 
-      {/* Problem list — empty state, no filter match, or the cards */}
-      {problems.length === 0 && !loading ? (
-        <div className="bg-[#111111] p-16 rounded-[40px] border border-dashed border-white/5 text-center flex flex-col items-center animate-slide-up" style={{ animationDelay: '0.4s' }}>
-          <div className="w-20 h-20 bg-indigo-500/10 rounded-3xl flex items-center justify-center text-indigo-500 mb-6">
-            <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 20h9" /><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z" /></svg>
-          </div>
-          <h3 className="text-2xl font-bold text-white mb-2">No problems tracked yet</h3>
-          <p className="text-zinc-500 max-w-xs">Your logs will appear here once you've committed your first problem.</p>
-        </div>
-      ) : displayedProblems.length === 0 ? (
-        <div className="text-center text-zinc-600 py-16 bg-[#111111] rounded-[40px] border border-white/5 animate-slide-up" style={{ animationDelay: '0.4s' }}>
-          No problems matching your active filters.
-        </div>
-      ) : (
-        <div className="grid gap-5 animate-slide-up" style={{ animationDelay: '0.4s' }}>
-          {displayedProblems.map((problem) => (
-            <div key={problem.id} className="transition-all hover:translate-x-1 duration-300">
-              <ProblemCard problem={problem} onDelete={handleDelete} />
-            </div>
-          ))}
-        </div>
-      )}
     </div>
   );
 }

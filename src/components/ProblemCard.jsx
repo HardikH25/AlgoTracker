@@ -1,10 +1,15 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import PlatformIcon from "./PlatformIcon";
+import { Pencil, Trash2, ChevronDown, ExternalLink, Star } from "lucide-react";
+import { doc, updateDoc } from "firebase/firestore";
+import { db } from "../services/firebase";
 
-export default function ProblemCard({ problem, onDelete, children }) {
+export default function ProblemCard({ problem, onDelete, onStarToggle, children }) {
   const [showNotes, setShowNotes] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [starring, setStarring] = useState(false);
+  const [localIsStarred, setLocalIsStarred] = useState(problem.isStarred || false);
 
   const handleDelete = async (e) => {
     e.preventDefault();
@@ -21,86 +26,175 @@ export default function ProblemCard({ problem, onDelete, children }) {
     }
   };
 
-  return (
-    <div className={`bg-[#1a1a1a] p-5 rounded-2xl border border-gray-800 hover:bg-[#222] transition-colors group relative ${isDeleting ? 'opacity-50 pointer-events-none' : ''}`}>
-      <div className="flex justify-between items-start sm:items-center flex-col sm:flex-row gap-4">
+  const handleStarToggle = async (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (starring) return;
+    setStarring(true);
+    const newVal = !localIsStarred;
+    setLocalIsStarred(newVal); // Optimistic UI update
+    
+    try {
+      await updateDoc(doc(db, "problems", problem.id), { isStarred: newVal });
+      if (onStarToggle) onStarToggle(problem.id, newVal);
+    } catch (err) {
+      console.error("Star toggle failed:", err);
+      setLocalIsStarred(!newVal); // Revert on failure
+    } finally {
+      setStarring(false);
+    }
+  };
 
-        <div className="flex gap-4 items-start sm:items-center w-full">
-          <div className="mt-1 sm:mt-0 opacity-80 group-hover:opacity-100 transition-opacity">
-            <PlatformIcon platform={problem.platform} />
+  const diffColors = {
+    Easy:   { text: "text-emerald-400", bg: "bg-emerald-500/10", border: "border-emerald-500/20", dot: "bg-emerald-400" },
+    Medium: { text: "text-amber-400",   bg: "bg-amber-500/10",   border: "border-amber-500/20",   dot: "bg-amber-400" },
+    Hard:   { text: "text-red-400",     bg: "bg-red-500/10",     border: "border-red-500/20",     dot: "bg-red-400" },
+  };
+  const dc = diffColors[problem.difficulty] || diffColors.Easy;
+
+  return (
+    <div
+      onClick={() => { if (problem.notes) setShowNotes(prev => !prev); }}
+      className={`
+        relative overflow-hidden rounded-2xl transition-all duration-300 group
+        bg-gradient-to-b from-[#111] to-[#0c0c0c]
+        border border-white/[0.05] hover:border-white/[0.1]
+        ${isDeleting ? 'opacity-40 pointer-events-none scale-[0.99]' : ''}
+        ${problem.notes ? 'cursor-pointer' : ''}
+      `}
+    >
+      {/* Top gradient line accent */}
+      <div className={`absolute top-0 left-0 right-0 h-[1px] bg-gradient-to-r from-transparent ${dc.dot === 'bg-emerald-400' ? 'via-emerald-500/30' : dc.dot === 'bg-amber-400' ? 'via-amber-500/30' : 'via-red-500/30'} to-transparent`}></div>
+
+      <div className="p-5">
+        {/* Row 1: Title + Status badge */}
+        <div className="flex justify-between items-start gap-4 mb-3">
+          <div className="flex-grow min-w-0">
+            <div className="flex items-center gap-2 mb-0.5">
+              {/* Difficulty dot */}
+              <span className={`w-2 h-2 rounded-full ${dc.dot} flex-shrink-0`}></span>
+
+              <h3 className="font-semibold text-[15px] text-zinc-200 group-hover:text-white transition-colors truncate">
+                {problem.url ? (
+                  <a
+                    href={problem.url}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="hover:underline underline-offset-4 decoration-zinc-700 inline-flex items-center gap-1.5"
+                    onClick={e => e.stopPropagation()}
+                  >
+                    {problem.title}
+                    <ExternalLink size={12} className="text-zinc-600 flex-shrink-0" />
+                  </a>
+                ) : (
+                  problem.title
+                )}
+              </h3>
+            </div>
           </div>
 
-          <div className="flex-grow">
-            <h3 className="font-bold text-lg text-zinc-100 flex flex-wrap items-center gap-2 group-hover:text-white transition-colors">
-              {problem.url ? (
-                <a href={problem.url} target="_blank" rel="noreferrer" className="hover:underline">{problem.title}</a>
-              ) : (
-                problem.title
-              )}
-              {problem.needsRevision && <span className="text-xs bg-white/10 text-zinc-200 px-2 py-0.5 border border-white/10 rounded-md shadow-sm">Revision</span>}
-            </h3>
+          <div className="flex items-center gap-2 flex-shrink-0">
+            {/* Star button */}
+            <button
+              onClick={handleStarToggle}
+              disabled={starring}
+              className={`p-1.5 rounded-lg transition-all duration-200 ${
+                localIsStarred
+                  ? 'text-amber-400 hover:text-amber-300'
+                  : 'text-zinc-700 hover:text-zinc-400 hover:bg-white/[0.03]'
+              }`}
+              title={localIsStarred ? "Unstar" : "Star"}
+            >
+              <Star size={16} fill={localIsStarred ? "currentColor" : "none"} />
+            </button>
 
-            <div className="text-sm text-zinc-500 mt-1 flex flex-wrap items-center gap-y-2">
-              <span className="mr-3">{problem.platform}</span>
-              <span className={`mr-3 font-semibold ${problem.difficulty === 'Easy' ? 'text-[#4C9C62]' : problem.difficulty === 'Medium' ? 'text-yellow-600' : 'text-[#C53030]'}`}>
-                {problem.difficulty}
+            {problem.isSolved ? (
+              <span className="bg-emerald-500/[0.08] text-emerald-400 border border-emerald-500/15 px-3 py-1 rounded-full text-[11px] font-bold tracking-wider uppercase">
+                Solved
               </span>
-              <span className="mr-3">{problem.timeTaken} mins</span>
-              {problem.sheet && problem.sheet !== "None" && (
-                <span className="mr-3 px-2 py-0.5 bg-zinc-800 text-zinc-300 border border-white/5 rounded text-xs">Sheet: {problem.sheet}</span>
-              )}
-
-              {problem.notes && (
-                <button
-                  onClick={() => setShowNotes(!showNotes)}
-                  className="text-zinc-200 hover:text-white bg-white/5 hover:bg-white/10 px-2 py-1 rounded-md text-xs font-semibold ml-1 cursor-pointer transition-colors border border-white/5"
-                >
-                  {showNotes ? "Hide Notes" : "View Ideas"}
-                </button>
-              )}
-            </div>
+            ) : (
+              <span className="bg-red-500/[0.08] text-red-400 border border-red-500/15 px-3 py-1 rounded-full text-[11px] font-bold tracking-wider uppercase">
+                Attempted
+              </span>
+            )}
           </div>
         </div>
 
-        <div className="flex items-center gap-4 self-end sm:self-auto">
+        {/* Row 2: Meta chips */}
+        <div className="flex flex-wrap items-center gap-2 mb-0.5">
+          {/* Platform chip */}
+          <div className="flex items-center gap-1.5 text-zinc-500 text-[12px]">
+            <PlatformIcon platform={problem.platform} />
+            <span className="font-medium">{problem.platform}</span>
+          </div>
+
+          <span className="text-zinc-800">•</span>
+
+          {/* Difficulty chip */}
+          <span className={`${dc.bg} ${dc.text} ${dc.border} border px-2 py-0.5 rounded-md text-[11px] font-semibold`}>
+            {problem.difficulty}
+          </span>
+
+          {/* Topic chip */}
+          {problem.topic && problem.topic !== "None" && (
+            <>
+              <span className="text-zinc-800">•</span>
+              <span className="bg-indigo-500/[0.06] text-indigo-400 border border-indigo-500/15 px-2 py-0.5 rounded-md text-[11px] font-medium">
+                {problem.topic}
+              </span>
+            </>
+          )}
+
+          {/* Notes indicator chevron */}
+          {problem.notes && (
+            <ChevronDown
+              size={14}
+              className={`ml-auto text-zinc-700 group-hover:text-zinc-500 transition-all duration-300 ${showNotes ? 'rotate-180 text-zinc-500' : ''}`}
+            />
+          )}
+        </div>
+
+        {/* Row 3: Action buttons */}
+        <div className="flex items-center gap-1 mt-3 pt-3 border-t border-white/[0.03]">
           {children}
 
-          <div className="flex items-center gap-1 order-2 sm:order-1">
+          <div className="flex items-center gap-1 ml-auto">
             <Link
               to={`/log/${problem.id}`}
-              className="p-2 text-zinc-600 hover:text-indigo-400 transition-colors rounded-lg hover:bg-indigo-500/10"
+              onClick={(e) => e.stopPropagation()}
+              className="flex items-center gap-1.5 px-3 py-1.5 text-zinc-600 hover:text-indigo-400 transition-all rounded-lg hover:bg-indigo-500/[0.06] text-[12px] font-medium"
               title="Edit Problem"
             >
-              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 20h9" /><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z" /></svg>
+              <Pencil size={13} />
+              <span className="hidden sm:inline">Edit</span>
             </Link>
 
             {onDelete && (
               <button
                 onClick={handleDelete}
-                className="p-2 text-zinc-600 hover:text-red-500 transition-colors rounded-lg hover:bg-red-500/10"
+                className="flex items-center gap-1.5 px-3 py-1.5 text-zinc-600 hover:text-red-400 transition-all rounded-lg hover:bg-red-500/[0.06] text-[12px] font-medium"
                 title="Delete Problem"
               >
-                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18" /><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" /><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" /><line x1="10" y1="11" x2="10" y2="17" /><line x1="14" y1="11" x2="14" y2="17" /></svg>
+                <Trash2 size={13} />
+                <span className="hidden sm:inline">Delete</span>
               </button>
-            )}
-          </div>
-
-          <div className="order-1 sm:order-2">
-            {problem.isSolved ? (
-              <span className="bg-[#253D2C] text-[#CFFFDC] border border-[#2E6F40] px-3 py-1 rounded-full text-sm font-bold tracking-wide">Solved</span>
-            ) : (
-              <span className="bg-[#09090b] text-[#C53030] border border-[#C53030]/50 px-3 py-1 rounded-full text-sm font-bold tracking-wide">Attempted</span>
             )}
           </div>
         </div>
       </div>
 
-      {showNotes && problem.notes && (
-        <div className="mt-4 bg-[#09090b] p-5 rounded-xl border border-white/5 text-zinc-400 text-sm whitespace-pre-wrap animate-in fade-in slide-in-from-top-2 duration-200">
-          <strong className="block mb-2 text-zinc-300 uppercase text-[10px] tracking-widest font-bold">Your Approach / Ideas</strong>
-          {problem.notes}
+      {/* Notes reveal with smooth animation */}
+      <div className={`overflow-hidden transition-all duration-400 ease-[cubic-bezier(0.16,1,0.3,1)] ${showNotes && problem.notes ? 'max-h-[600px] opacity-100' : 'max-h-0 opacity-0'}`}>
+        <div className="px-5 pb-5">
+          <div className="bg-[#080808] p-4 rounded-xl border border-white/[0.04] text-zinc-400 text-[13px] leading-relaxed whitespace-pre-wrap">
+            <div className="flex items-center gap-2 mb-3">
+              <div className="w-1 h-4 rounded-full bg-indigo-500/50"></div>
+              <strong className="text-zinc-400 uppercase text-[10px] tracking-[0.15em] font-bold">Your Approach / Ideas</strong>
+            </div>
+            {problem.notes}
+          </div>
         </div>
-      )}
+      </div>
     </div>
   );
 }

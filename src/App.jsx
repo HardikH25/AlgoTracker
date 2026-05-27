@@ -7,9 +7,10 @@ import './App.css';
 
 // Load each page only when the user visits it (saves load time)
 const Dashboard = lazy(() => import('./pages/Dashboard'));
-const TrainingSheets = lazy(() => import('./pages/TrainingSheets'));
+const Topics = lazy(() => import('./pages/Topics'));
+const TopicDetail = lazy(() => import('./pages/TopicDetail'));
 const ProblemLogger = lazy(() => import('./pages/ProblemLogger'));
-const Revision = lazy(() => import('./pages/Revision'));
+const Starred = lazy(() => import('./pages/Starred'));
 const Login = lazy(() => import('./pages/Login'));
 const Signup = lazy(() => import('./pages/Signup'));
 
@@ -45,10 +46,18 @@ export default function App() {
                   }
                 />
                 <Route
-                  path="/sheets"
+                  path="/topics"
                   element={
                     <ProtectedRoute>
-                      <TrainingSheets />
+                      <Topics />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/topics/:topicName"
+                  element={
+                    <ProtectedRoute>
+                      <TopicDetail />
                     </ProtectedRoute>
                   }
                 />
@@ -70,10 +79,10 @@ export default function App() {
                   }
                 />
                 <Route
-                  path="/revision"
+                  path="/starred"
                   element={
                     <ProtectedRoute>
-                      <Revision />
+                      <Starred />
                     </ProtectedRoute>
                   }
                 />
