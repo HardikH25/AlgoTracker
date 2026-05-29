@@ -9,7 +9,6 @@ export default function ProblemCard({ problem, onDelete, onStarToggle, children 
   const [showNotes, setShowNotes] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [starring, setStarring] = useState(false);
-  const [localIsStarred, setLocalIsStarred] = useState(problem.isStarred || false);
 
   const handleDelete = async (e) => {
     e.preventDefault();
@@ -31,15 +30,17 @@ export default function ProblemCard({ problem, onDelete, onStarToggle, children 
     e.stopPropagation();
     if (starring) return;
     setStarring(true);
-    const newVal = !localIsStarred;
-    setLocalIsStarred(newVal); // Optimistic UI update
+    const newVal = !problem.isStarred;
+    
+    // Optimistic UI update in the parent immediately
+    if (onStarToggle) onStarToggle(problem.id, newVal);
     
     try {
       await updateDoc(doc(db, "problems", problem.id), { isStarred: newVal });
-      if (onStarToggle) onStarToggle(problem.id, newVal);
     } catch (err) {
       console.error("Star toggle failed:", err);
-      setLocalIsStarred(!newVal); // Revert on failure
+      // Revert in parent on failure
+      if (onStarToggle) onStarToggle(problem.id, !newVal);
     } finally {
       setStarring(false);
     }
@@ -99,13 +100,13 @@ export default function ProblemCard({ problem, onDelete, onStarToggle, children 
               onClick={handleStarToggle}
               disabled={starring}
               className={`p-1.5 rounded-lg transition-all duration-200 ${
-                localIsStarred
+                problem.isStarred
                   ? 'text-amber-400 hover:text-amber-300'
                   : 'text-zinc-700 hover:text-zinc-400 hover:bg-white/[0.03]'
               }`}
-              title={localIsStarred ? "Unstar" : "Star"}
+              title={problem.isStarred ? "Unstar" : "Star"}
             >
-              <Star size={16} fill={localIsStarred ? "currentColor" : "none"} />
+              <Star size={16} fill={problem.isStarred ? "currentColor" : "none"} />
             </button>
 
             {problem.isSolved ? (

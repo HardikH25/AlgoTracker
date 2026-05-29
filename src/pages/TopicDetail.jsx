@@ -63,6 +63,13 @@ export default function TopicDetail() {
     }
   }, []);
 
+  // Handle star toggle in local state
+  const handleStarToggle = useCallback((problemId, newVal) => {
+    setProblems(prev => prev.map(p =>
+      p.id === problemId ? { ...p, isStarred: newVal } : p
+    ));
+  }, []);
+
   const solvedCount = problems.filter(p => p.isSolved).length;
   const totalCount = problems.length;
   const successRate = totalCount === 0 ? 0 : Math.round((solvedCount / totalCount) * 100);
@@ -178,7 +185,7 @@ export default function TopicDetail() {
         <div className="grid gap-5 animate-slide-up">
           {displayedProblems.map((problem) => (
             <div key={problem.id} className="transition-all hover:translate-x-1 duration-300">
-              <ProblemCard problem={problem} onDelete={handleDelete} />
+              <ProblemCard problem={problem} onDelete={handleDelete} onStarToggle={handleStarToggle} />
             </div>
           ))}
         </div>

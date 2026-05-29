@@ -33,7 +33,7 @@ export default function Navbar() {
     }`;
 
   return (
-    <nav className="text-zinc-300 py-4 px-6 sm:px-8 sticky top-0 z-50 bg-[#050505]/80 backdrop-blur-2xl backdrop-saturate-150">
+    <nav className="text-zinc-300 py-4 px-6 sm:px-8 sticky top-0 z-50 bg-transparent backdrop-blur-lg border-b border-white/[0.02] transition-all">
       <div className="max-w-6xl mx-auto flex justify-between items-center">
 
         {/* Logo */}
@@ -57,10 +57,9 @@ export default function Navbar() {
                     to={link.to}
                     end={link.to === "/"}
                     className={({ isActive }) =>
-                      `relative px-5 py-2 rounded-full text-[13px] font-medium transition-all duration-300 flex items-center gap-1.5 ${
-                        isActive
-                          ? "bg-white text-black font-semibold shadow-md"
-                          : "text-zinc-500 hover:text-zinc-200"
+                      `relative px-5 py-2 rounded-full text-[13px] font-medium transition-all duration-300 flex items-center gap-1.5 ${isActive
+                        ? "bg-white text-black font-semibold shadow-md"
+                        : "text-zinc-500 hover:text-zinc-200"
                       }`
                     }
                   >

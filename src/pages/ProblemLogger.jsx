@@ -90,10 +90,11 @@ export default function ProblemLogger() {
     // Clean up what the user typed
     const cleanTitle = title.trim();
     const cleanUrl = url.trim();
-    const cleanTopic = topic.trim() || "None";
+    const cleanTopic = topic.trim();
 
     // Simple checks before saving
     if (!cleanTitle) return setError("Title is required");
+    if (!cleanTopic) return setError("Topic is required");
 
     if (cleanUrl) {
       try {
@@ -273,11 +274,12 @@ export default function ProblemLogger() {
         {/* Topic field */}
         <div className="grid grid-cols-1 gap-7">
           <div>
-            <label className="block text-zinc-400 font-bold mb-2 text-[10px] uppercase tracking-[0.15em]">Topic <span className="opacity-50">(e.g. Arrays, Dynamic Programming)</span></label>
+            <label className="block text-zinc-400 font-bold mb-2 text-[10px] uppercase tracking-[0.15em]">Topic <span className="text-red-500">*</span> <span className="opacity-50">(e.g. Arrays, Dynamic Programming)</span></label>
             <input
               type="text"
               value={topic}
               onChange={(e) => setTopic(e.target.value)}
+              required
               className="w-full px-5 py-3.5 bg-[#0a0a0a] border border-white/[0.05] text-white rounded-2xl focus:border-indigo-500/50 focus:bg-black focus:ring-1 focus:ring-indigo-500/50 focus:outline-none transition-all placeholder-zinc-700 font-medium"
               placeholder="e.g. Arrays"
             />
