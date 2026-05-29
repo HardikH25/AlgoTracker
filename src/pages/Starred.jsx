@@ -35,10 +35,9 @@ export default function Starred() {
     fetchProblems();
   }, [currentUser]);
 
-  // Only show starred problems
   const starredProblems = problems.filter(p => p.isStarred === true);
 
-  // Handle star toggle — unstarring removes from this view
+
   function handleStarToggle(problemId, newVal) {
     setProblems(prev => prev.map(p =>
       p.id === problemId ? { ...p, isStarred: newVal } : p

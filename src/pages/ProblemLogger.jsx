@@ -45,7 +45,6 @@ export default function ProblemLogger() {
         const docSnap = await getDoc(docRef);
 
         if (docSnap.exists()) {
-          // Fill all the form fields with the saved data
           const data = docSnap.data();
           setUrl(data.url || "");
           setTitle(data.title || "");
@@ -92,7 +91,7 @@ export default function ProblemLogger() {
     const cleanUrl = url.trim();
     const cleanTopic = topic.trim();
 
-    // Simple checks before saving
+    //checks
     if (!cleanTitle) return setError("Title is required");
     if (!cleanTopic) return setError("Topic is required");
 
@@ -109,7 +108,7 @@ export default function ProblemLogger() {
       setError("");
       setLoading(true);
 
-      // Build the object we will save to the database
+      //object we will save to the database
       const problemData = {
         userId: currentUser.uid,
         url: cleanUrl,
@@ -125,17 +124,15 @@ export default function ProblemLogger() {
       };
 
       if (isEditMode) {
-        // Update the existing document
         await updateDoc(doc(db, "problems", id), problemData);
       } else {
-        // Create a brand new document
         await addDoc(collection(db, "problems"), {
           ...problemData,
           createdAt: serverTimestamp()
         });
       }
 
-      navigate("/"); // go back to the dashboard after saving
+      navigate(`/topics/${encodeURIComponent(cleanTopic)}`); 
     } catch (err) {
       setError(`Failed to ${isEditMode ? 'update' : 'add'} problem: ` + err.message);
     } finally {
@@ -143,7 +140,7 @@ export default function ProblemLogger() {
     }
   }
 
-  // Send the code snippet to Gemini AI and get complexity info back
+  //gemini block
   async function handleAIAnalysis() {
     if (!codeSnippet.trim()) return setError("Please paste some code to analyze first.");
     setError("");

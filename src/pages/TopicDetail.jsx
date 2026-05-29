@@ -26,14 +26,13 @@ export default function TopicDetail() {
         setLoading(true);
         const q = query(
           collection(db, "problems"),
-          where("userId", "==", currentUser.uid),
-          where("topic", "==", decodedTopic)
+          where("userId", "==", currentUser.uid)
         );
         const snapshot = await getDocs(q);
         const data = snapshot.docs.map(d => ({
           id: d.id,
           ...d.data()
-        }));
+        })).filter(d => d.topic && d.topic.toLowerCase().trim() === decodedTopic.toLowerCase().trim());
 
         // Sort newest first
         data.sort((a, b) => {

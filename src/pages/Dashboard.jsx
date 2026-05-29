@@ -70,12 +70,19 @@ export default function Dashboard() {
   // Gather topic stats for the pill row
   const topicList = useMemo(() => {
     const counts = {};
+    const displayNames = {};
     problems.forEach(p => {
       if (p.topic && p.topic !== "None") {
-        counts[p.topic] = (counts[p.topic] || 0) + 1;
+        const lower = p.topic.toLowerCase().trim();
+        counts[lower] = (counts[lower] || 0) + 1;
+        // Prefer capitalized version for display
+        if (!displayNames[lower] || (p.topic.charAt(0) === p.topic.charAt(0).toUpperCase() && displayNames[lower].charAt(0) !== displayNames[lower].charAt(0).toUpperCase())) {
+          displayNames[lower] = p.topic.trim();
+        }
       }
     });
     return Object.entries(counts)
+      .map(([lower, count]) => [displayNames[lower], count])
       .sort((a, b) => b[1] - a[1]); // sort by count descending
   }, [problems]);
 
@@ -130,9 +137,6 @@ export default function Dashboard() {
       prev.map(p => (p.id === problemId ? { ...p, isStarred: newVal } : p))
     );
   }
-
-  // Extract username from email
-  const userName = currentUser?.email?.split("@")[0] || "coder";
 
   // Filter chip definitions
   const filters = [

@@ -42,15 +42,19 @@ export default function Topics() {
     problems.forEach(p => {
       if (!p.topic || p.topic === "None") return; // skip problems with no topic
 
-      if (!topics[p.topic]) {
-        topics[p.topic] = { name: p.topic, total: 0, solved: 0 };
+      const lower = p.topic.toLowerCase().trim();
+
+      if (!topics[lower]) {
+        topics[lower] = { name: p.topic.trim(), total: 0, solved: 0 };
+      } else if (p.topic.charAt(0) === p.topic.charAt(0).toUpperCase() && topics[lower].name.charAt(0) !== topics[lower].name.charAt(0).toUpperCase()) {
+        topics[lower].name = p.topic.trim();
       }
 
-      topics[p.topic].total += 1;
-      if (p.isSolved) topics[p.topic].solved += 1;
+      topics[lower].total += 1;
+      if (p.isSolved) topics[lower].solved += 1;
     });
 
-    return Object.values(topics);
+    return Object.values(topics).sort((a, b) => b.total - a.total);
   }, [problems]);
 
   if (loading && problems.length === 0) return <div className="p-8 text-center text-gray-400">Loading your topics...</div>;
