@@ -4,6 +4,7 @@ import { db } from "../services/firebase";
 import { useAuth } from "../context/AuthContext";
 import { useParams, Link } from "react-router-dom";
 import ProblemCard from "../components/ProblemCard";
+import NotesManager from "../components/NotesManager";
 import { ArrowLeft } from "lucide-react";
 
 export default function TopicDetail() {
@@ -137,7 +138,7 @@ export default function TopicDetail() {
       {/* Search and filter controls */}
       <div className="flex flex-col md:flex-row justify-between items-center mb-8 gap-6 animate-slide-up">
         <h2 className="text-2xl font-bold text-white tracking-tight">Problems</h2>
-        <div className="flex gap-4 w-full md:w-auto overflow-x-auto pb-4 md:pb-0 scrollbar-hide">
+        <div className="flex gap-4 w-full md:w-auto overflow-x-auto pb-4 md:pb-0 hide-scrollbar">
           <input
             type="text"
             placeholder="Search..."
@@ -189,6 +190,9 @@ export default function TopicDetail() {
           ))}
         </div>
       )}
+
+      {/* Topic Notes Manager */}
+      <NotesManager topic={decodedTopic} />
     </div>
   );
 }
